@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Transaksi Kas</title>
+
+<style>
+body{
+  font-family:sans-serif;
+  background:#f5f6fa;
+  margin:0;
+}
+
+.container{
+  max-width:500px;
+  margin:auto;
+  padding:15px;
+}
+
+.card{
+  background:white;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+}
+
+input,select{
+  width:100%;
+  padding:12px;
+  margin:6px 0 12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-size:16px;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  background:#28a745;
+  color:white;
+  font-size:16px;
+}
+
+.type-btn{
+  display:flex;
+  gap:10px;
+}
+
+.type-btn button{
+  flex:1;
+}
+
+.active{
+  background:#007bff !important;
+}
+
+.preview{
+  background:#eef;
+  padding:10px;
+  border-radius:8px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+  <h3>Jenis Transaksi</h3>
+
+  <div class="type-btn">
+    <button id="btnMasuk">Pemasukan</button>
+    <button id="btnKeluar">Pengeluaran</button>
+  </div>
+</div>
+
+<div class="card">
+  <label>Tanggal</label>
+  <input type="date" id="tanggal">
+
+  <label>Kategori</label>
+  <input id="kategori" placeholder="contoh: kerja bhakti / donasi">
+
+  <label>Nominal</label>
+  <input type="number" id="nilai">
+
+  <div class="preview" id="preview">0</div>
+
+  <label>Keterangan</label>
+  <input id="keterangan">
+</div>
+
+<button id="submit">Simpan Transaksi</button>
+
+</div>
+
+<script>
+
+const API = "ISI_URL_GAS";
+
+let jenis = "pemasukan";
+
+// helper
+function el(id){ return document.getElementById(id); }
+
+// =======================
+// INIT
+// =======================
+function init(){
+  const today = new Date().toISOString().split("T")[0];
+  el("tanggal").value = today;
+
+  setJenis("pemasukan");
+}
+
+// =======================
+function setJenis(j){
+  jenis = j;
+
+  el("btnMasuk").classList.remove("active");
+  el("btnKeluar").classList.remove("active");
+
+  if(j === "pemasukan"){
+    el("btnMasuk").classList.add("active");
+  } else {
+    el("btnKeluar").classList.add("active");
+  }
+
+  updatePreview();
+}
+
+// =======================
+el("btnMasuk").onclick = () => setJenis("pemasukan");
+el("btnKeluar").onclick = () => setJenis("pengeluaran");
+
+// =======================
+function updatePreview(){
+
+  let val = parseInt(el("nilai").value) || 0;
+
+  if(jenis === "pengeluaran"){
+    val = -Math.abs(val);
+  }
+
+  el("preview").innerText = val.toLocaleString();
+}
+
+el("nilai").addEventListener("input", updatePreview);
+
+// =======================
+// SUBMIT
+// =======================
+el("submit").onclick = async function(){
+
+  const data = {
+    action: "addTransaksiManual",
+    tanggal: el("tanggal").value,
+    jenis: jenis,
+    kategori: el("kategori").value,
+    nilai: parseInt(el("nilai").value),
+    keterangan: el("keterangan").value
+  };
+
+  console.log("SEND:", data);
+
+  try{
+    const res = await fetch(API,{
+      method:"POST",
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    console.log("RESULT:", result);
+
+    if(result.status === "success"){
+      alert("Berhasil!");
+      location.reload();
+    }else{
+      alert("Error!");
+    }
+
+  }catch(err){
+    alert("Gagal konek");
+    console.error(err);
+  }
+};
+
+init();
+
+</script>
+
+</body>
+</html>
